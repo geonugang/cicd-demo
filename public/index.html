@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Demo Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 800px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .info-card h3 {
+            margin-bottom: 15px;
+            color: #4ecdc4;
+            font-size: 1.2rem;
+        }
+
+        .info-item {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1.5s infinite;
+        }
+
+        .loading {
+            opacity: 0.6;
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+
+        .version-display {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="pulse">🚀 CI/CD Demo</h1>
+        <p class="subtitle">Jenkins + Docker 멀티스테이지 빌드 파이프라인</p>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>📊 애플리케이션 정보</h3>
+                <div class="info-item">
+                    <span class="status-indicator"></span>
+                    <span id="serverStatus">서버 상태: 로딩 중...</span>
+                </div>
+                <div class="info-item">버전: <span id="appVersion">-</span></div>
+                <div class="info-item">빌드 번호: <span id="buildNumber">-</span></div>
+            </div>
+
+            <div class="info-card">
+                <h3>🐳 컨테이너 정보</h3>
+                <div class="info-item">Node.js 버전: <span id="nodeVersion">-</span></div>
+                <div class="info-item">플랫폼: <span id="platform">-</span></div>
+                <div class="info-item">배포 시간: <span id="deployTime">-</span></div>
+            </div>
+        </div>
+
+        <!-- TODO: 버전 업데이트 시 여기를 수정하세요 (예: v1.0 -> v2.0) -->
+        <div class="version-display">v1.0</div>
+    </div>
+
+    <script>
+        // 애플리케이션 정보 로드
+        async function loadAppInfo() {
+            try {
+                // 서버 상태 확인
+                const healthResponse = await fetch('/api/health');
+                const healthData = await healthResponse.json();
+                document.getElementById('serverStatus').innerHTML = 
+                    `<span class="status-indicator"></span>서버 상태: ${healthData.status}`;
+
+                // 애플리케이션 정보 로드
+                const infoResponse = await fetch('/api/info');
+                const infoData = await infoResponse.json();
+                
+                document.getElementById('appVersion').textContent = infoData.version;
+                document.getElementById('buildNumber').textContent = infoData.buildNumber;
+                document.getElementById('nodeVersion').textContent = infoData.nodeVersion;
+                document.getElementById('platform').textContent = infoData.platform;
+                document.getElementById('deployTime').textContent = 
+                    new Date(infoData.deployTime).toLocaleString('ko-KR');
+
+            } catch (error) {
+                console.error('정보 로드 실패:', error);
+                document.getElementById('serverStatus').innerHTML = 
+                    '<span class="status-indicator" style="background-color: #ff6b6b;"></span>서버 상태: 연결 실패';
+            }
+        }
+
+        // 페이지 로드 시 정보 로드
+        window.addEventListener('load', function() {
+            document.querySelector('.container').style.opacity = '0';
+            document.querySelector('.container').style.transform = 'translateY(30px)';
+            document.querySelector('.container').style.transition = 'all 0.8s ease-out';
+            
+            setTimeout(() => {
+                document.querySelector('.container').style.opacity = '1';
+                document.querySelector('.container').style.transform = 'translateY(0)';
+                loadAppInfo();
+            }, 100);
+        });
+
+        // 30초마다 자동 새로고침
+        setInterval(loadAppInfo, 30000);
+    </script>
+</body>
+</html>
